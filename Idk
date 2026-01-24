@@ -1,77 +1,63 @@
-local Players = game:GetService("Players")
+--[[
+    XORIFY PREMIUM - POSITION & STEAL EDITION
+    Toggle Menu: Insert
+]]
+
+local LPlayer = game:GetService("Players").LocalPlayer
+local UIS = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
-local TweenService = game:GetService("TweenService")
 
-local player = Players.LocalPlayer
-local pGui = player:WaitForChild("PlayerGui")
+-- Variables for Logic
+local Stealing = false
+local SavedPositions = {nil, nil, nil}
 
--- Variables for State
-local active = false
-local TELEPORT_POS = Vector3.new(0, 100, 0) -- Change this to your desired position
+-- GUI SETUP
+local ScreenGui = Instance.new("ScreenGui", game:GetService("CoreGui"))
+local Main = Instance.new("Frame", ScreenGui)
+Main.Size = UDim2.new(0, 260, 0, 420)
+Main.Position = UDim2.new(0.5, -130, 0.5, -210)
+Main.BackgroundColor3 = Color3.fromRGB(22, 24, 33)
+Main.BorderSizePixel = 0
+Main.Active = true
+Main.Draggable = true
+Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 10)
 
--- 1. Create the UI First (So it shows up immediately)
-local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "ModMenu"
-screenGui.ResetOnSpawn = false -- Keeps the button on screen when you die
-screenGui.Parent = pGui
+local Title = Instance.new("TextLabel", Main)
+Title.Size = UDim2.new(1, 0, 0, 45)
+Title.Text = "⚡ XORIFY PREMIUM"
+Title.TextColor3 = Color3.new(1, 1, 1)
+Title.BackgroundTransparency = 1
+Title.Font = Enum.Font.GothamBold
+Title.TextSize = 16
 
-local mainButton = Instance.new("TextButton")
-mainButton.Size = UDim2.new(0, 200, 0, 50)
-mainButton.Position = UDim2.new(0.5, -100, 0.5, -25) -- Center of screen
-mainButton.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-mainButton.Text = "ACTIVATE MOD"
-mainButton.TextColor3 = Color3.new(1, 1, 1)
-mainButton.Font = Enum.Font.SourceSansBold
-mainButton.TextSize = 20
-mainButton.Visible = true
-mainButton.Active = true
-mainButton.Parent = screenGui
+--- UI Helper for Buttons
+local function CreateButton(text, color, yPos, key)
+    local btn = Instance.new("TextButton", Main)
+    btn.Size = UDim2.new(0.75, 0, 0, 38)
+    btn.Position = UDim2.new(0.05, 0, 0, yPos)
+    btn.BackgroundColor3 = color
+    btn.Text = text
+    btn.TextColor3 = Color3.new(1, 1, 1)
+    btn.Font = Enum.Font.GothamBold
+    btn.TextSize = 13
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
 
-local corner = Instance.new("UICorner")
-corner.Parent = mainButton
+    local kb = Instance.new("TextLabel", btn)
+    kb.Size = UDim2.new(0, 35, 1, 0)
+    kb.Position = UDim2.new(1.1, 0, 0, 0)
+    kb.BackgroundColor3 = Color3.fromRGB(35, 38, 50)
+    kb.Text = key or ""
+    kb.TextColor3 = Color3.new(1, 1, 1)
+    kb.Font = Enum.Font.GothamBold
+    Instance.new("UICorner", kb).CornerRadius = UDim.new(0, 4)
+    return btn
+end
 
--- 2. NoClip Functionality
-RunService.Stepped:Connect(function()
-    if active and player.Character then
-        for _, part in pairs(player.Character:GetDescendants()) do
-            if part:IsA("BasePart") then
-                part.CanCollide = false
-            end
-        end
-    end
-end)
+-- Top Buttons (Matching Image)
+local InstantBtn = CreateButton("⚡ Instant Steal", Color3.fromRGB(60, 125, 255), 60, "R")
+local FastBtn = CreateButton("🔥 Fast Steal", Color3.fromRGB(160, 45, 255), 110, "E")
 
--- 3. The Main Logic
-mainButton.MouseButton1Click:Connect(function()
-    local char = player.Character
-    local hum = char and char:FindFirstChild("Humanoid")
-    local root = char and char:FindFirstChild("HumanoidRootPart")
-    
-    if not char or not root or not hum then return end
-    
-    active = not active
-    
-    if active then
-        -- TWEEN: Squish effect
-        local tInfo = TweenInfo.new(0.3, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out)
-        TweenService:Create(root, tInfo, {Size = Vector3.new(1,1,1)}):Play()
-        
-        -- ACTIONS
-        root.CFrame = CFrame.new(TELEPORT_POS)
-        hum.WalkSpeed = 100
-        hum.PlatformStand = true -- This is the Ragdoll
-        
-        -- UI Update
-        mainButton.Text = "MOD: ACTIVE"
-        mainButton.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
-    else
-        -- RESET
-        hum.WalkSpeed = 16
-        hum.PlatformStand = false
-        root.Size = Vector3.new(2, 2, 1)
-        
-        -- UI Update
-        mainButton.Text = "ACTIVATE MOD"
-        mainButton.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-    end
-end)
+-- Position Section
+local PosLabel = Instance.new("TextLabel", Main)
+PosLabel.Text = "📍 POSITION MANAGER"
+PosLabel.Size = UDim2.new(1, 0, 0, 3
