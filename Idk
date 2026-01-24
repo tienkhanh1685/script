@@ -1,63 +1,107 @@
---[[
-    XORIFY PREMIUM - POSITION & STEAL EDITION
-    Toggle Menu: Insert
-]]
-
-local LPlayer = game:GetService("Players").LocalPlayer
+-- Services
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
 local UIS = game:GetService("UserInputService")
-local RunService = game:GetService("RunService")
 
--- Variables for Logic
-local Stealing = false
-local SavedPositions = {nil, nil, nil}
+local player = Players.LocalPlayer
+local char = player.Character or player.CharacterAdded:Wait()
+local humanoid = char:WaitForChild("Humanoid")
+local hrp = char:WaitForChild("HumanoidRootPart")
 
--- GUI SETUP
-local ScreenGui = Instance.new("ScreenGui", game:GetService("CoreGui"))
-local Main = Instance.new("Frame", ScreenGui)
-Main.Size = UDim2.new(0, 260, 0, 420)
-Main.Position = UDim2.new(0.5, -130, 0.5, -210)
-Main.BackgroundColor3 = Color3.fromRGB(22, 24, 33)
-Main.BorderSizePixel = 0
-Main.Active = true
-Main.Draggable = true
-Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 10)
+local savedCFrame
 
-local Title = Instance.new("TextLabel", Main)
-Title.Size = UDim2.new(1, 0, 0, 45)
-Title.Text = "⚡ XORIFY PREMIUM"
-Title.TextColor3 = Color3.new(1, 1, 1)
-Title.BackgroundTransparency = 1
-Title.Font = Enum.Font.GothamBold
-Title.TextSize = 16
+-- GUI
+local gui = Instance.new("ScreenGui", player.PlayerGui)
+gui.Name = "CleanTweenGui"
+gui.ResetOnSpawn = false
 
---- UI Helper for Buttons
-local function CreateButton(text, color, yPos, key)
-    local btn = Instance.new("TextButton", Main)
-    btn.Size = UDim2.new(0.75, 0, 0, 38)
-    btn.Position = UDim2.new(0.05, 0, 0, yPos)
-    btn.BackgroundColor3 = color
-    btn.Text = text
-    btn.TextColor3 = Color3.new(1, 1, 1)
-    btn.Font = Enum.Font.GothamBold
-    btn.TextSize = 13
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
+local main = Instance.new("Frame", gui)
+main.Size = UDim2.new(0, 260, 0, 160)
+main.Position = UDim2.new(0.5, -130, 0.5, -80)
+main.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+main.BorderSizePixel = 0
+main.Active = true
+main.Draggable = true
 
-    local kb = Instance.new("TextLabel", btn)
-    kb.Size = UDim2.new(0, 35, 1, 0)
-    kb.Position = UDim2.new(1.1, 0, 0, 0)
-    kb.BackgroundColor3 = Color3.fromRGB(35, 38, 50)
-    kb.Text = key or ""
-    kb.TextColor3 = Color3.new(1, 1, 1)
-    kb.Font = Enum.Font.GothamBold
-    Instance.new("UICorner", kb).CornerRadius = UDim.new(0, 4)
-    return btn
+Instance.new("UICorner", main).CornerRadius = UDim.new(0, 16)
+
+-- Shadow
+local shadow = Instance.new("ImageLabel", gui)
+shadow.Image = "rbxassetid://1316045217"
+shadow.ImageTransparency = 0.5
+shadow.ScaleType = Enum.ScaleType.Slice
+shadow.SliceCenter = Rect.new(10,10,118,118)
+shadow.Size = main.Size + UDim2.fromOffset(20,20)
+shadow.Position = main.Position - UDim2.fromOffset(10,10)
+shadow.BackgroundTransparency = 1
+shadow.ZIndex = 0
+main.ZIndex = 1
+
+-- Title
+local title = Instance.new("TextLabel", main)
+title.Size = UDim2.new(1, -20, 0, 35)
+title.Position = UDim2.new(0, 10, 0, 5)
+title.Text = "Ragdoll Tween"
+title.Font = Enum.Font.GothamBold
+title.TextSize = 18
+title.TextColor3 = Color3.fromRGB(230, 230, 230)
+title.BackgroundTransparency = 1
+title.TextXAlignment = Left
+
+-- Button creator
+local function createButton(text, y)
+	local btn = Instance.new("TextButton", main)
+	btn.Size = UDim2.new(1, -20, 0, 45)
+	btn.Position = UDim2.new(0, 10, 0, y)
+	btn.Text = text
+	btn.Font = Enum.Font.Gotham
+	btn.TextSize = 14
+	btn.TextColor3 = Color3.fromRGB(230,230,230)
+	btn.BackgroundColor3 = Color3.fromRGB(40,40,40)
+	btn.BorderSizePixel = 0
+	btn.AutoButtonColor = false
+
+	Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 12)
+
+	-- Hover animation
+	btn.MouseEnter:Connect(function()
+		TweenService:Create(btn, TweenInfo.new(0.15), {
+			BackgroundColor3 = Color3.fromRGB(60,60,60)
+		}):Play()
+	end)
+
+	btn.MouseLeave:Connect(function()
+		TweenService:Create(btn, TweenInfo.new(0.15), {
+			BackgroundColor3 = Color3.fromRGB(40,40,40)
+		}):Play()
+	end)
+
+	return btn
 end
 
--- Top Buttons (Matching Image)
-local InstantBtn = CreateButton("⚡ Instant Steal", Color3.fromRGB(60, 125, 255), 60, "R")
-local FastBtn = CreateButton("🔥 Fast Steal", Color3.fromRGB(160, 45, 255), 110, "E")
+local setBtn = createButton("Set Position", 50)
+local tweenBtn = createButton("Ragdoll → Tween", 105)
 
--- Position Section
-local PosLabel = Instance.new("TextLabel", Main)
-PosLabel.Text = "📍 POSITION MANAGER"
-PosLabel.Size = UDim2.new(1, 0, 0, 3
+-- Logic
+setBtn.MouseButton1Click:Connect(function()
+	savedCFrame = hrp.CFrame
+	setBtn.Text = "Position Saved ✓"
+end)
+
+tweenBtn.MouseButton1Click:Connect(function()
+	if not savedCFrame then return end
+
+	-- Ragdoll first
+	humanoid:ChangeState(Enum.HumanoidStateType.Physics)
+	humanoid.PlatformStand = true
+
+	task.wait(0.1)
+
+	-- Tween
+	local tween = TweenService:Create(
+		hrp,
+		TweenInfo.new(2, Enum.EasingStyle.Quint, Enum.EasingDirection.Out),
+		{CFrame = savedCFrame}
+	)
+	tween:Play()
+end)
