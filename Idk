@@ -1,0 +1,77 @@
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+
+local player = Players.LocalPlayer
+local pGui = player:WaitForChild("PlayerGui")
+
+-- Variables for State
+local active = false
+local TELEPORT_POS = Vector3.new(0, 100, 0) -- Change this to your desired position
+
+-- 1. Create the UI First (So it shows up immediately)
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "ModMenu"
+screenGui.ResetOnSpawn = false -- Keeps the button on screen when you die
+screenGui.Parent = pGui
+
+local mainButton = Instance.new("TextButton")
+mainButton.Size = UDim2.new(0, 200, 0, 50)
+mainButton.Position = UDim2.new(0.5, -100, 0.5, -25) -- Center of screen
+mainButton.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+mainButton.Text = "ACTIVATE MOD"
+mainButton.TextColor3 = Color3.new(1, 1, 1)
+mainButton.Font = Enum.Font.SourceSansBold
+mainButton.TextSize = 20
+mainButton.Visible = true
+mainButton.Active = true
+mainButton.Parent = screenGui
+
+local corner = Instance.new("UICorner")
+corner.Parent = mainButton
+
+-- 2. NoClip Functionality
+RunService.Stepped:Connect(function()
+    if active and player.Character then
+        for _, part in pairs(player.Character:GetDescendants()) do
+            if part:IsA("BasePart") then
+                part.CanCollide = false
+            end
+        end
+    end
+end)
+
+-- 3. The Main Logic
+mainButton.MouseButton1Click:Connect(function()
+    local char = player.Character
+    local hum = char and char:FindFirstChild("Humanoid")
+    local root = char and char:FindFirstChild("HumanoidRootPart")
+    
+    if not char or not root or not hum then return end
+    
+    active = not active
+    
+    if active then
+        -- TWEEN: Squish effect
+        local tInfo = TweenInfo.new(0.3, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out)
+        TweenService:Create(root, tInfo, {Size = Vector3.new(1,1,1)}):Play()
+        
+        -- ACTIONS
+        root.CFrame = CFrame.new(TELEPORT_POS)
+        hum.WalkSpeed = 100
+        hum.PlatformStand = true -- This is the Ragdoll
+        
+        -- UI Update
+        mainButton.Text = "MOD: ACTIVE"
+        mainButton.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+    else
+        -- RESET
+        hum.WalkSpeed = 16
+        hum.PlatformStand = false
+        root.Size = Vector3.new(2, 2, 1)
+        
+        -- UI Update
+        mainButton.Text = "ACTIVATE MOD"
+        mainButton.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    end
+end)
